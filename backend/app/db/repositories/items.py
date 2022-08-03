@@ -38,8 +38,8 @@ class ItemsRepository(BaseRepository):  # noqa: WPS214
         title: str,
         description: str,
         seller: User,
+        image: str,
         body: Optional[str] = None,
-        image: Optional[str] = None,
         tags: Optional[Sequence[str]] = None,
     ) -> Item:
         async with self.connection.transaction():
@@ -50,7 +50,7 @@ class ItemsRepository(BaseRepository):  # noqa: WPS214
                 description=description,
                 body=body,
                 seller_username=seller.username,
-                image=image
+                image=image,
             )
 
             if tags:
@@ -205,7 +205,9 @@ class ItemsRepository(BaseRepository):  # noqa: WPS214
         items_rows = await self.connection.fetch(query.get_sql(), *query_params)
 
         return [
-            await self.get_item_by_slug(slug=item_row['slug'], requested_user=requested_user)
+            await self.get_item_by_slug(
+                slug=item_row["slug"], requested_user=requested_user
+            )
             for item_row in items_rows
         ]
 
@@ -257,9 +259,9 @@ class ItemsRepository(BaseRepository):  # noqa: WPS214
         return [row["tag"] for row in tag_rows]
 
     async def get_favorites_count_for_item_by_slug(self, *, slug: str) -> int:
-        return (
-            await queries.get_favorites_count_for_item(self.connection, slug=slug)
-        )["favorites_count"]
+        return (await queries.get_favorites_count_for_item(self.connection, slug=slug))[
+            "favorites_count"
+        ]
 
     async def is_item_favorited_by_user(self, *, slug: str, user: User) -> bool:
         return (
@@ -300,8 +302,8 @@ class ItemsRepository(BaseRepository):  # noqa: WPS214
         title_query = Query.from_(items).select(items.title).where(items.slug == slug)
         result_rows = await self.connection.fetch(title_query.get_sql())
         if not len(result_rows):
-            raise Exception(f'No item with slug {slug}')
-        title = result_rows[0]['title']
+            raise Exception(f"No item with slug {slug}")
+        title = result_rows[0]["title"]
 
         return Item(
             id_=item_row["id"],

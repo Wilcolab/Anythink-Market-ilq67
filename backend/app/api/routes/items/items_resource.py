@@ -22,7 +22,11 @@ from app.models.schemas.items import (
     ListOfItemsInResponse,
 )
 from app.resources import strings
-from app.services.items import check_item_exists, get_slug_for_item
+from app.services.items import (
+    check_item_exists,
+    get_slug_for_item,
+    check_image_uploaded_for_item,
+)
 from app.services.event import send_event
 
 router = APIRouter()
@@ -42,9 +46,7 @@ async def list_items(
         offset=items_filters.offset,
         requested_user=user,
     )
-    items_for_response = [
-        ItemForResponse.from_orm(item) for item in items
-    ]
+    items_for_response = [ItemForResponse.from_orm(item) for item in items]
     return ListOfItemsInResponse(
         items=items_for_response,
         items_count=len(items),
@@ -68,6 +70,11 @@ async def create_new_item(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=strings.ITEM_ALREADY_EXISTS,
         )
+    if check_image_uploaded_for_item(item_create):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=strings.ITEM_MISSING_IMAGE,
+        )
     item = await items_repo.create_item(
         slug=slug,
         title=item_create.title,
@@ -75,9 +82,9 @@ async def create_new_item(
         body=item_create.body,
         seller=user,
         tags=item_create.tags,
-        image=item_create.image
+        image=item_create.image,
     )
-    send_event('item_created', {'item': item_create.title})
+    send_event("item_created", {"item": item_create.title})
     return ItemInResponse(item=ItemForResponse.from_orm(item))
 
 
