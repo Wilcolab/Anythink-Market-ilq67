@@ -49,7 +49,7 @@ class Editor extends React.Component {
 
     this.submitForm = (ev) => {
       ev.preventDefault();
-      if (!this.props.image){
+      if (!this.props.image) {
         alert("Please enter an image url");
         return;
       }
